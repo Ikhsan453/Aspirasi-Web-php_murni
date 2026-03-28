@@ -349,3 +349,12 @@ hr { border-color: rgba(51,65,85,0.5) !important; opacity: 1; }
 .input-group-text { background: rgba(51,65,85,0.8); border: 1px solid rgba(100,116,139,0.5); color: #f8fafc !important; }
 .progress { background: rgba(51,65,85,0.6); border-radius: 8px; overflow: hidden; }
 .progress-bar { background: var(--gradient-accent); color: #fff !important; font-weight: 600; }
+
+/* Tanda wajib (*) pada label form */
+.form-label .text-danger,
+label .text-danger {
+    font-size: 0.7rem;
+    vertical-align: super;
+    opacity: 0.8;
+    font-weight: 400;
+}

@@ -20,7 +20,6 @@ $hist = $db->prepare("SELECT * FROM tb_aspirasi_status_history WHERE id_pelapora
 $hist->execute([$id]);
 $histRows = $hist->fetchAll();
 
-// Handle update status
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
@@ -33,16 +32,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $adminUser = getAdminUser();
         $changedBy = $adminUser['username'] ?? 'admin';
 
-        // Catat ke history
         $db->prepare("INSERT INTO tb_aspirasi_status_history (id_pelaporan,status,feedback,changed_by) VALUES (?,?,?,?)")
            ->execute([$id, $newStatus, $feedback ?: null, $changedBy]);
 
-        // Ambil ket_kategori
         $katStmt = $db->prepare("SELECT ket_kategori FROM tb_kategori WHERE id_kategori = ?");
         $katStmt->execute([$aspirasi['id_kategori']]);
         $ketKategori = $katStmt->fetchColumn();
 
-        // Update atau insert tb_aspirasi
         $cekAsp = $db->prepare("SELECT id_aspirasi FROM tb_aspirasi WHERE id_pelaporan = ?");
         $cekAsp->execute([$id]);
         if ($cekAsp->fetch()) {
@@ -59,92 +55,172 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$status = $aspirasi['status'];
-$badgeClass = match($status) { 'Menunggu'=>'bg-warning text-dark','Proses'=>'bg-info','Selesai'=>'bg-success',default=>'bg-secondary' };
-$pageTitle = 'Detail Aspirasi #' . $id;
+$status     = $aspirasi['status'];
+$badgeClass = match($status) { 'Menunggu'=>'bg-warning','Proses'=>'bg-info','Selesai'=>'bg-success',default=>'bg-secondary' };
+$badgeIcon  = match($status) { 'Menunggu'=>'fa-clock','Proses'=>'fa-spinner','Selesai'=>'fa-check-circle',default=>'fa-question' };
+$pageTitle  = 'Detail Aspirasi #' . $id;
 require_once __DIR__ . '/../../includes/header_admin.php';
 ?>
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="text-white fw-bold mb-0"><i class="fas fa-eye me-2"></i>Detail Aspirasi #<?= $id ?></h4>
-    <a href="<?= url('admin/aspirasi/index.php') ?>" class="btn btn-secondary"><i class="fas fa-arrow-left me-2"></i>Kembali</a>
+
+<div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+    <div>
+        <h4 class="text-white fw-bold mb-1">
+            <i class="fas fa-eye me-2"></i>Detail Aspirasi
+            <span class="badge bg-secondary ms-1">#<?= $id ?></span>
+        </h4>
+        <small class="text-muted-custom">
+            Dilaporkan pada <?= date('d F Y H:i', strtotime($aspirasi['created_at'])) ?>
+        </small>
+    </div>
+    <a href="<?= url('admin/aspirasi/index.php') ?>" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Kembali
+    </a>
 </div>
 
 <?php if (!empty($errors)): ?>
-<div class="alert alert-danger"><?php foreach ($errors as $e) echo '<div>' . e($e) . '</div>'; ?></div>
+<div class="alert alert-danger mb-4">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <?php foreach ($errors as $err) echo '<div>' . e($err) . '</div>'; ?>
+</div>
 <?php endif; ?>
 
-<div class="row">
-    <div class="col-lg-7 mb-4">
-        <div class="card h-100" style="background:rgba(30,41,59,.95);border:1px solid rgba(51,65,85,.5);border-radius:16px;">
-            <div class="card-header"><h6 class="text-white mb-0 fw-semibold"><i class="fas fa-info-circle me-2"></i>Informasi Aspirasi</h6></div>
+<div class="row g-4">
+    <!-- Kolom kiri: Info aspirasi -->
+    <div class="col-lg-7">
+        <div class="card h-100 slide-in">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="text-white mb-0 fw-semibold">
+                    <i class="fas fa-info-circle me-2"></i>Informasi Aspirasi
+                </h6>
+                <span class="badge <?= $badgeClass ?>">
+                    <i class="fas <?= $badgeIcon ?> me-1"></i><?= $status ?>
+                </span>
+            </div>
             <div class="card-body">
-                <table class="table table-borderless mb-0">
-                    <tr><td style="width:35%;color:rgba(203,213,225,.8)">ID Pelaporan</td><td class="text-white"><strong>#<?= $aspirasi['id_pelaporan'] ?></strong></td></tr>
-                    <tr><td style="color:rgba(203,213,225,.8)">Tanggal</td><td class="text-white"><?= date('d/m/Y H:i', strtotime($aspirasi['created_at'])) ?></td></tr>
-                    <tr><td style="color:rgba(203,213,225,.8)">NIS</td><td class="text-white"><strong><?= e($aspirasi['nis']) ?></strong></td></tr>
-                    <tr><td style="color:rgba(203,213,225,.8)">Kelas</td><td class="text-white"><?= e($aspirasi['kelas']??'-') ?> <?= e($aspirasi['jurusan']??'') ?></td></tr>
-                    <tr><td style="color:rgba(203,213,225,.8)">Kategori</td><td><span class="badge bg-warning text-dark"><?= e($aspirasi['ket_kategori']??'-') ?></span></td></tr>
-                    <tr><td style="color:rgba(203,213,225,.8)">Lokasi</td><td class="text-white"><?= e($aspirasi['lokasi']) ?></td></tr>
-                    <tr><td style="color:rgba(203,213,225,.8)">Status</td><td><span class="badge <?= $badgeClass ?>"><?= $status ?></span></td></tr>
-                </table>
-                <hr style="border-color:rgba(51,65,85,.5)">
-                <h6 class="text-white fw-semibold mb-2">Keterangan</h6>
-                <p class="text-light" style="white-space:pre-wrap;"><?= e($aspirasi['ket']) ?></p>
+                <!-- Info grid -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="p-3 rounded" style="background:rgba(51,65,85,0.3);border:1px solid rgba(100,116,139,0.2);">
+                            <small class="text-muted-custom d-block mb-1"><i class="fas fa-hashtag me-1"></i>ID Pelaporan</small>
+                            <span class="text-white fw-bold">#<?= $aspirasi['id_pelaporan'] ?></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded" style="background:rgba(51,65,85,0.3);border:1px solid rgba(100,116,139,0.2);">
+                            <small class="text-muted-custom d-block mb-1"><i class="fas fa-id-card me-1"></i>NIS</small>
+                            <span class="text-white fw-bold"><?= e($aspirasi['nis']) ?></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded" style="background:rgba(51,65,85,0.3);border:1px solid rgba(100,116,139,0.2);">
+                            <small class="text-muted-custom d-block mb-1"><i class="fas fa-graduation-cap me-1"></i>Kelas</small>
+                            <span class="text-white"><?= e($aspirasi['kelas']??'-') ?> <?= e($aspirasi['jurusan']??'') ?></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 rounded" style="background:rgba(51,65,85,0.3);border:1px solid rgba(100,116,139,0.2);">
+                            <small class="text-muted-custom d-block mb-1"><i class="fas fa-tag me-1"></i>Kategori</small>
+                            <span class="badge bg-warning"><?= e($aspirasi['ket_kategori']??'-') ?></span>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded" style="background:rgba(51,65,85,0.3);border:1px solid rgba(100,116,139,0.2);">
+                            <small class="text-muted-custom d-block mb-1"><i class="fas fa-map-marker-alt me-1"></i>Lokasi</small>
+                            <span class="text-white"><?= e($aspirasi['lokasi']) ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Keterangan -->
+                <div class="mb-4">
+                    <h6 class="text-white fw-semibold mb-2"><i class="fas fa-comment-alt me-2"></i>Keterangan</h6>
+                    <div class="p-3 rounded" style="background:rgba(51,65,85,0.3);border:1px solid rgba(100,116,139,0.2);">
+                        <p class="text-white mb-0" style="white-space:pre-wrap;line-height:1.7"><?= e($aspirasi['ket']) ?></p>
+                    </div>
+                </div>
+
+                <!-- Foto -->
                 <?php if ($aspirasi['foto']): ?>
-                <h6 class="text-white fw-semibold mb-2 mt-3">Foto Pendukung</h6>
-                <img src="<?= url('uploads/aspirasi/' . e($aspirasi['foto'])) ?>" alt="Foto" class="img-fluid rounded" style="max-height:300px;">
+                <div>
+                    <h6 class="text-white fw-semibold mb-2"><i class="fas fa-camera me-2"></i>Foto Pendukung</h6>
+                    <div class="text-center p-3 rounded" style="background:rgba(51,65,85,0.3);border:1px solid rgba(100,116,139,0.2);">
+                        <img src="<?= url('uploads/aspirasi/' . e($aspirasi['foto'])) ?>"
+                             alt="Foto Aspirasi" class="img-fluid rounded shadow"
+                             style="max-height:350px;cursor:pointer;"
+                             onclick="window.open(this.src,'_blank')">
+                        <div class="mt-2"><small class="text-muted-custom">Klik foto untuk memperbesar</small></div>
+                    </div>
+                </div>
                 <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-5 mb-4">
-        <div class="card mb-4" style="background:rgba(30,41,59,.95);border:1px solid rgba(51,65,85,.5);border-radius:16px;">
-            <div class="card-header"><h6 class="text-white mb-0 fw-semibold"><i class="fas fa-edit me-2"></i>Update Status</h6></div>
+    <!-- Kolom kanan: Update status + riwayat -->
+    <div class="col-lg-5">
+        <!-- Form update status -->
+        <div class="card mb-4 slide-in">
+            <div class="card-header">
+                <h6 class="text-white mb-0 fw-semibold"><i class="fas fa-edit me-2"></i>Update Status</h6>
+            </div>
             <div class="card-body">
                 <form method="POST">
                     <input type="hidden" name="csrf_token" value="<?= csrfToken() ?>">
                     <div class="mb-3">
-                        <label class="form-label">Status <span class="text-danger">*</span></label>
-                        <select name="status" class="form-select" required>
+                        <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                        <select name="status" class="form-select form-select-lg" required>
                             <?php foreach (['Menunggu','Proses','Selesai'] as $s): ?>
                             <option value="<?= $s ?>" <?= $status===$s?'selected':'' ?>><?= $s ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Feedback (opsional)</label>
-                        <textarea name="feedback" class="form-control" rows="3"
-                                  placeholder="Berikan feedback untuk aspirasi ini..."><?= e($aspirasi['feedback'] ?? '') ?></textarea>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Feedback <small class="text-muted-custom fw-normal">(opsional)</small></label>
+                        <textarea name="feedback" class="form-control" rows="4"
+                                  placeholder="Berikan keterangan atau tindakan yang sudah dilakukan..."><?= e($aspirasi['feedback'] ?? '') ?></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-save me-2"></i>Update Status</button>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-save me-2"></i>Simpan Update Status
+                    </button>
                 </form>
             </div>
         </div>
 
-        <div class="card" style="background:rgba(30,41,59,.95);border:1px solid rgba(51,65,85,.5);border-radius:16px;">
-            <div class="card-header"><h6 class="text-white mb-0 fw-semibold"><i class="fas fa-history me-2"></i>Riwayat Status</h6></div>
-            <div class="card-body" style="max-height:300px;overflow-y:auto;">
+        <!-- Riwayat status -->
+        <div class="card slide-in">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="text-white mb-0 fw-semibold"><i class="fas fa-history me-2"></i>Riwayat Status</h6>
+                <span class="badge bg-secondary"><?= count($histRows) ?> entri</span>
+            </div>
+            <div class="card-body p-0" style="max-height:350px;overflow-y:auto;">
                 <?php if (empty($histRows)): ?>
-                <p class="text-muted-custom text-center mb-0">Belum ada riwayat</p>
-                <?php else: foreach ($histRows as $h):
-                    $hBadge = match($h['status']) { 'Menunggu'=>'bg-warning text-dark','Proses'=>'bg-info','Selesai'=>'bg-success',default=>'bg-secondary' };
+                <div class="text-center py-4">
+                    <i class="fas fa-history fa-2x mb-2 d-block" style="color:rgba(100,116,139,.4)"></i>
+                    <small class="text-muted-custom">Belum ada riwayat perubahan</small>
+                </div>
+                <?php else: foreach ($histRows as $i => $h):
+                    $hBadge = match($h['status']) { 'Menunggu'=>'bg-warning','Proses'=>'bg-info','Selesai'=>'bg-success',default=>'bg-secondary' };
+                    $hIcon  = match($h['status']) { 'Menunggu'=>'fa-clock','Proses'=>'fa-spinner','Selesai'=>'fa-check-circle',default=>'fa-question' };
                 ?>
-                <div class="mb-3 pb-3" style="border-bottom:1px solid rgba(100,116,139,.3);">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <span class="badge <?= $hBadge ?>"><?= $h['status'] ?></span>
-                            <?php if ($h['feedback']): ?>
-                            <div class="mt-1"><small class="text-light"><?= e($h['feedback']) ?></small></div>
-                            <?php endif; ?>
-                            <div><small class="text-muted-custom"><i class="fas fa-user me-1"></i><?= e($h['changed_by']) ?></small></div>
-                        </div>
+                <div class="p-3 <?= $i < count($histRows)-1 ? '' : '' ?>"
+                     style="border-bottom:1px solid rgba(51,65,85,0.5);<?= $i===0 ? 'background:rgba(59,130,246,0.05)' : '' ?>">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge <?= $hBadge ?>">
+                            <i class="fas <?= $hIcon ?> me-1"></i><?= $h['status'] ?>
+                        </span>
                         <small class="text-muted-custom"><?= date('d/m/Y H:i', strtotime($h['created_at'])) ?></small>
                     </div>
+                    <?php if ($h['feedback']): ?>
+                    <p class="text-white mb-1 small" style="line-height:1.5"><?= e($h['feedback']) ?></p>
+                    <?php endif; ?>
+                    <small class="text-muted-custom">
+                        <i class="fas fa-user me-1"></i><?= e($h['changed_by']) ?>
+                    </small>
                 </div>
                 <?php endforeach; endif; ?>
             </div>
         </div>
     </div>
 </div>
+
 <?php require_once __DIR__ . '/../../includes/footer_admin.php'; ?>

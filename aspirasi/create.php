@@ -102,7 +102,7 @@ require_once __DIR__ . '/../includes/header_app.php';
 
                         <div class="form-section">
                             <div class="form-section-title"><i class="fas fa-user me-2"></i>Identitas Pelapor</div>
-                            <label for="nis" class="form-label">NIS <span class="badge bg-danger">WAJIB</span></label>
+                            <label for="nis" class="form-label">NIS <span class="text-danger">*</span></label>
                             <input type="text" class="form-control <?= isset($errors['nis']) ? 'is-invalid' : '' ?>"
                                    id="nis" name="nis" value="<?= e($_POST['nis'] ?? '') ?>"
                                    placeholder="Masukkan NIS Anda" maxlength="10" required>
@@ -116,7 +116,7 @@ require_once __DIR__ . '/../includes/header_app.php';
                             <div class="form-section-title"><i class="fas fa-clipboard-list me-2"></i>Detail Aspirasi</div>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="id_kategori" class="form-label">Kategori <span class="badge bg-danger">WAJIB</span></label>
+                                    <label for="id_kategori" class="form-label">Kategori <span class="text-danger">*</span></label>
                                     <select class="form-select <?= isset($errors['id_kategori']) ? 'is-invalid' : '' ?>" id="id_kategori" name="id_kategori" required>
                                         <option value="">-- Pilih Kategori --</option>
                                         <?php foreach ($kategoris as $k): ?>
@@ -130,7 +130,7 @@ require_once __DIR__ . '/../includes/header_app.php';
                                     <?php endif; ?>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="lokasi" class="form-label">Lokasi Kejadian <span class="badge bg-danger">WAJIB</span></label>
+                                    <label for="lokasi" class="form-label">Lokasi Kejadian <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control <?= isset($errors['lokasi']) ? 'is-invalid' : '' ?>"
                                            id="lokasi" name="lokasi" value="<?= e($_POST['lokasi'] ?? '') ?>"
                                            placeholder="Contoh: Ruang Kelas XII IPA 1" maxlength="50" required>
@@ -141,7 +141,7 @@ require_once __DIR__ . '/../includes/header_app.php';
                                 </div>
                             </div>
                             <div class="mt-3">
-                                <label for="ket" class="form-label">Keterangan Detail <span class="badge bg-danger">WAJIB</span></label>
+                                <label for="ket" class="form-label">Keterangan Detail <span class="text-danger">*</span></label>
                                 <textarea class="form-control <?= isset($errors['ket']) ? 'is-invalid' : '' ?>"
                                           id="ket" name="ket" rows="5"
                                           placeholder="Jelaskan secara detail kondisi atau masalah yang ingin dilaporkan..." required><?= e($_POST['ket'] ?? '') ?></textarea>
