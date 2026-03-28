@@ -1,0 +1,19 @@
+# Upload folder
+uploads/
+
+# Debug & temp files
+admin/debug.php
+admin/test-login.php
+admin/cek-session.php
+admin/reset-password.php
+config/migrate.php
+config/migrate.sql
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
