@@ -1,9 +1,11 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 
 $pageTitle = 'Dashboard Admin';
 
+//HITUNG STATISTIK ASPIRASI
 $db          = getDB();
 $allAspirasi = $db->query("SELECT COALESCE(a.status,'Menunggu') as status FROM tb_input_aspirasi ia LEFT JOIN tb_aspirasi a ON ia.id_pelaporan=a.id_pelaporan")->fetchAll();
 $totalAspirasi = count($allAspirasi);
@@ -14,6 +16,7 @@ foreach ($allAspirasi as $row) {
     elseif ($row['status']==='Selesai') $aspirasiSelesai++;
 }
 
+//QUERY DATA ASPIRASI TERBARU
 $recentAspirasi = $db->query("
     SELECT ia.*, COALESCE(a.status,'Menunggu') as status, k.ket_kategori
     FROM tb_input_aspirasi ia
@@ -22,6 +25,7 @@ $recentAspirasi = $db->query("
     ORDER BY ia.created_at DESC LIMIT 5
 ")->fetchAll();
 
+//QUERY KATEGORI DENGAN STATISTIK
 $kategoris = $db->query("
     SELECT k.*, COUNT(ia.id_pelaporan) as total
     FROM tb_kategori k

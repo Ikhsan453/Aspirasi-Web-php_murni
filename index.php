@@ -1,7 +1,9 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/config/db.php';
 $pageTitle = 'Beranda - Aspirasi Web';
 
+//HITUNG STATISTIK DASHBOARD
 $db = getDB();
 $totalAspirasi = $db->query("SELECT COUNT(*) FROM tb_input_aspirasi")->fetchColumn();
 $totalKategori = $db->query("SELECT COUNT(*) FROM tb_kategori")->fetchColumn();

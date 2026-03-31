@@ -1,38 +1,49 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+//INISIALISASI DATABASE & ARRAY
 $db     = getDB();
 $errors = [];
 
+//TANGANI POST REQUEST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //VALIDASI CSRF
     verifyCsrf();
+    //AMBIL & SANITASI DATA
     $nis        = trim($_POST['nis'] ?? '');
     $idKategori = (int)($_POST['id_kategori'] ?? 0);
     $lokasi     = trim($_POST['lokasi'] ?? '');
     $ket        = trim($_POST['ket'] ?? '');
 
+    //VALIDASI INPUT
     if (!$nis)        $errors['nis']        = 'NIS wajib diisi.';
     if (!$idKategori) $errors['id_kategori'] = 'Kategori wajib dipilih.';
     if (!$lokasi)     $errors['lokasi']      = 'Lokasi wajib diisi.';
     if (!$ket)        $errors['ket']         = 'Keterangan wajib diisi.';
 
+    //CEK NIS TERDAFTAR
     if (empty($errors)) {
         $cek = $db->prepare("SELECT nis FROM tb_siswa WHERE nis = ?");
         $cek->execute([$nis]);
         if (!$cek->fetch()) $errors['nis'] = 'NIS tidak ditemukan. Silakan hubungi admin.';
     }
 
+    //UPLOAD FOTO
     if (empty($errors)) {
         $fotoName = null;
         if (!empty($_FILES['foto']['name'])) {
             $file    = $_FILES['foto'];
             $allowed = ['image/jpeg','image/png','image/jpg','image/gif'];
+            //CEK FORMAT FILE
             if (!in_array($file['type'], $allowed)) {
                 $errors['foto'] = 'Format file tidak valid. Gunakan JPG, PNG, atau GIF.';
-            } elseif ($file['size'] > 2*1024*1024) {
+            } //CEK UKURAN FILE
+            elseif ($file['size'] > 2*1024*1024) {
                 $errors['foto'] = 'Ukuran file terlalu besar. Maksimal 2MB.';
-            } else {
+            } //SIMPAN FILE
+            else {
                 $uploadDir = __DIR__ . '/../uploads/aspirasi/';
                 if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
                 $fotoName = time() . '_' . basename($file['name']);
@@ -41,19 +52,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    //INSERT KE DATABASE
     if (empty($errors)) {
         $stmt = $db->prepare("INSERT INTO tb_input_aspirasi (nis,id_kategori,lokasi,ket,foto) VALUES (?,?,?,?,?)");
         $stmt->execute([$nis, $idKategori, $lokasi, $ket, $fotoName]);
         $idPelaporan = $db->lastInsertId();
 
-        // Ambil ket_kategori dulu
+        //AMBIL KATEGORI
         $katStmt = $db->prepare("SELECT ket_kategori FROM tb_kategori WHERE id_kategori = ?");
         $katStmt->execute([$idKategori]);
         $ketKategori = $katStmt->fetchColumn();
 
+        //INSERT ASPIRASI
         $db->prepare("INSERT INTO tb_aspirasi (id_pelaporan,id_kategori,ket_kategori,status) VALUES (?,?,?,'Menunggu')")
            ->execute([$idPelaporan, $idKategori, $ketKategori]);
 
+        //INSERT HISTORY STATUS
         $db->prepare("INSERT INTO tb_aspirasi_status_history (id_pelaporan,status,feedback,changed_by) VALUES (?,'Menunggu','Aspirasi telah diterima dan sedang menunggu review dari admin.','system')")
            ->execute([$idPelaporan]);
 

@@ -1,25 +1,32 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+//INISIALISASI DATABASE & INPUT SEARCH/FILTER
 $db      = getDB();
 $search  = trim($_GET['search'] ?? '');
 $status  = trim($_GET['status'] ?? '');
 $perPage = (int)($_GET['per_page'] ?? 10);
 $page    = max(1, (int)($_GET['page'] ?? 1));
+//VALIDASI PER_PAGE
 if (!in_array($perPage, [5,10,25,50,100])) $perPage = 10;
 
+//BUILD WHERE CLAUSE
 $conditions = []; $params = [];
+//KONDISI SEARCH
 if ($search) {
     $conditions[] = "(ia.nis LIKE ? OR ia.lokasi LIKE ? OR ia.ket LIKE ? OR k.ket_kategori LIKE ?)";
     $params = array_merge($params, ["%$search%","%$search%","%$search%","%$search%"]);
 }
+//KONDISI STATUS FILTER
 if ($status) {
     $conditions[] = "COALESCE(a.status,'Menunggu') = ?";
     $params[] = $status;
 }
 $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
 
+//HITUNG TOTAL BARIS
 $countSql = "SELECT COUNT(*) FROM tb_input_aspirasi ia
     LEFT JOIN tb_aspirasi a ON ia.id_pelaporan=a.id_pelaporan
     LEFT JOIN tb_kategori k ON ia.id_kategori=k.id_kategori $where";
@@ -27,9 +34,11 @@ $total = $db->prepare($countSql);
 $total->execute($params);
 $totalRows = (int)$total->fetchColumn();
 
+//HITUNG PAGINATION
 $baseUrl   = url('admin/aspirasi/index.php') . "?search=" . urlencode($search) . "&status=" . urlencode($status) . "&per_page=$perPage";
 $pagination = paginate($totalRows, $perPage, $page, $baseUrl);
 
+//QUERY DATA TABEL ASPIRASI
 $stmt = $db->prepare("SELECT ia.*, COALESCE(a.status,'Menunggu') as status, k.ket_kategori
     FROM tb_input_aspirasi ia
     LEFT JOIN tb_aspirasi a ON ia.id_pelaporan=a.id_pelaporan
@@ -38,7 +47,7 @@ $stmt = $db->prepare("SELECT ia.*, COALESCE(a.status,'Menunggu') as status, k.ke
 $stmt->execute(array_merge($params, [$perPage, $pagination['offset']]));
 $aspirasis = $stmt->fetchAll();
 
-// Hitung statistik
+//HITUNG STATISTIK STATUS ASPIRASI
 $stats = $db->query("SELECT
     COUNT(*) as total,
     SUM(CASE WHEN COALESCE(a.status,'Menunggu')='Menunggu' THEN 1 ELSE 0 END) as menunggu,

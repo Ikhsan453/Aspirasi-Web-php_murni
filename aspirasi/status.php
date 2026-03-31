@@ -1,23 +1,30 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+//INISIALISASI DATABASE & INPUT
 $db      = getDB();
 $nis     = trim($_POST['nis'] ?? $_GET['nis'] ?? '');
 $perPage = (int)($_POST['per_page'] ?? $_GET['per_page'] ?? 10);
 $page    = max(1, (int)($_GET['page'] ?? 1));
+//VALIDASI PER_PAGE
 if (!in_array($perPage, [5,10,25,50,100])) $perPage = 10;
 
+//INISIALISASI ARRAY
 $aspirasis     = [];
 $totalAspirasi = 0;
 $menunggu = $proses = $selesai = 0;
 $pagination    = null;
 $searched      = false;
 
+//VALIDASI CSRF JIK POST
 if ($nis && $_SERVER['REQUEST_METHOD'] === 'POST') verifyCsrf();
 
+//PROSES PENCARIAN
 if ($nis) {
     $searched = true;
+    //CEK DAN HITUNG STATUS ASPIRASI
     $allRows  = $db->prepare("SELECT COALESCE(a.status,'Menunggu') as status FROM tb_input_aspirasi ia LEFT JOIN tb_aspirasi a ON ia.id_pelaporan=a.id_pelaporan WHERE ia.nis=?");
     $allRows->execute([$nis]);
     foreach ($allRows->fetchAll() as $row) {
@@ -27,8 +34,10 @@ if ($nis) {
         elseif ($row['status']==='Selesai') $selesai++;
     }
 
+    //HITUNG PAGINATION
     $pagination = paginate($totalAspirasi, $perPage, $page, url('aspirasi/status.php') . "?nis=" . urlencode($nis) . "&per_page=$perPage");
 
+    //QUERY DATA ASPIRASI DENGAN PAGINATION
     $stmt = $db->prepare("
         SELECT ia.*, COALESCE(a.status,'Menunggu') as status, a.feedback, a.updated_at as aspirasi_updated,
                k.ket_kategori, s.kelas, s.jurusan

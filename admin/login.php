@@ -1,28 +1,37 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+//REDIRECT JIK SUDAH LOGIN
 if (isAdminLoggedIn()) {
     header('Location: ' . url('admin/dashboard.php'), true, 302);
     exit();
 }
 
+//TANGANI POST REQUEST
 $errors = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //AMBIL & SANITASI DATA
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
 
+    //VALIDASI INPUT
     if (!$username) $errors[] = 'Username wajib diisi.';
     if (!$password) $errors[] = 'Password wajib diisi.';
 
+    //PROSES LOGIN
     if (empty($errors)) {
         try {
+            //QUERY DATABASE
             $stmt = getDB()->prepare("SELECT * FROM tb_admin WHERE username = ?");
             $stmt->execute([$username]);
             $adminRow = $stmt->fetch();
 
+            //CEK PASSWORD
             if ($adminRow && password_verify($password, $adminRow['password'])) {
+                //SET SESSION
                 $_SESSION['admin_id']       = $adminRow['id'];
                 $_SESSION['admin_username'] = $adminRow['username'];
                 $_SESSION['admin_role']     = $adminRow['role'];

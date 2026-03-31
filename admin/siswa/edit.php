@@ -1,7 +1,9 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+//OPSI DROPDOWN
 $kelas_options = ['X', 'XI', 'XII'];
 $jurusan_options = [
     'Teknik Elektronika',
@@ -15,21 +17,28 @@ $jurusan_options = [
     'Teknologi Farmasi'
 ];
 
+//INISIALISASI DATABASE & AMBIL DATA
 $db  = getDB();
 $nis = trim($_GET['nis'] ?? '');
 $stmt = $db->prepare("SELECT * FROM tb_siswa WHERE nis = ?");
 $stmt->execute([$nis]);
 $siswa = $stmt->fetch();
+//VALIDASI DATA EXIST
 if (!$siswa) { header('Location: ' . url('admin/siswa/index.php')); exit; }
 
+//TANGANI POST REQUEST
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //VALIDASI CSRF
     verifyCsrf();
+    //AMBIL & SANITASI DATA
     $kelas   = trim($_POST['kelas'] ?? '');
     $jurusan = trim($_POST['jurusan'] ?? '');
+    //VALIDASI INPUT
     if (!$kelas)   $errors[] = 'Kelas wajib diisi.';
     if (!$jurusan) $errors[] = 'Jurusan wajib diisi.';
 
+    //UPDATE DATABASE
     if (empty($errors)) {
         $db->prepare("UPDATE tb_siswa SET kelas=?, jurusan=? WHERE nis=?")->execute([$kelas, $jurusan, $nis]);
         setFlash('success', 'Data siswa berhasil diupdate.');

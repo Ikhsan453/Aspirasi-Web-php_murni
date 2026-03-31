@@ -1,21 +1,29 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+//INISIALISASI DATABASE & AMBIL DATA
 $db = getDB();
 $id = (int)($_GET['id'] ?? 0);
 $stmt = $db->prepare("SELECT * FROM tb_kategori WHERE id_kategori = ?");
 $stmt->execute([$id]);
 $kategori = $stmt->fetch();
+//VALIDASI DATA EXIST
 if (!$kategori) { header('Location: ' . url('admin/kategori/index.php')); exit; }
 
+//TANGANI POST REQUEST
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //VALIDASI CSRF
     verifyCsrf();
+    //AMBIL & SANITASI DATA
     $ket = trim($_POST['ket_kategori'] ?? '');
+    //VALIDASI INPUT
     if (!$ket) $errors[] = 'Nama kategori wajib diisi.';
     elseif (mb_strlen($ket) > 30) $errors[] = 'Nama kategori maksimal 30 karakter.';
 
+    //UPDATE DATABASE
     if (empty($errors)) {
         $db->prepare("UPDATE tb_kategori SET ket_kategori=? WHERE id_kategori=?")->execute([$ket, $id]);
         setFlash('success', 'Kategori berhasil diupdate.');

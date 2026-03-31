@@ -1,7 +1,9 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+//AMBIL ID PELAPORAN DARI SESSION
 $idPelaporan = $_SESSION['last_id_pelaporan'] ?? null;
 unset($_SESSION['last_id_pelaporan']);
 

@@ -1,10 +1,13 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+//INISIALISASI DATABASE & AMBIL ID
 $db = getDB();
 $id = (int)($_GET['id'] ?? 0);
 
+//QUERY DETAIL ASPIRASI
 $stmt = $db->prepare("SELECT ia.*, COALESCE(a.status,'Menunggu') as status, a.feedback,
     k.ket_kategori, s.kelas, s.jurusan
     FROM tb_input_aspirasi ia
@@ -16,31 +19,40 @@ $stmt->execute([$id]);
 $aspirasi = $stmt->fetch();
 if (!$aspirasi) { header('Location: ' . url('admin/aspirasi/index.php')); exit; }
 
+//QUERY HISTORY STATUS
 $hist = $db->prepare("SELECT * FROM tb_aspirasi_status_history WHERE id_pelaporan=? ORDER BY created_at DESC");
 $hist->execute([$id]);
 $histRows = $hist->fetchAll();
 
+//TANGANI POST REQUEST
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //VALIDASI CSRF
     verifyCsrf();
     $newStatus = $_POST['status'] ?? '';
     $feedback  = trim($_POST['feedback'] ?? '');
+    //VALIDASI STATUS
     if (!in_array($newStatus, ['Menunggu','Proses','Selesai'])) {
         $errors[] = 'Status tidak valid.';
     }
+    //UPDATE STATUS & INSERT HISTORY
     if (empty($errors)) {
         $adminUser = getAdminUser();
         $changedBy = $adminUser['username'] ?? 'admin';
 
+        //INSERT KE HISTORY
         $db->prepare("INSERT INTO tb_aspirasi_status_history (id_pelaporan,status,feedback,changed_by) VALUES (?,?,?,?)")
            ->execute([$id, $newStatus, $feedback ?: null, $changedBy]);
 
+        //AMBIL KATEGORI
         $katStmt = $db->prepare("SELECT ket_kategori FROM tb_kategori WHERE id_kategori = ?");
         $katStmt->execute([$aspirasi['id_kategori']]);
         $ketKategori = $katStmt->fetchColumn();
 
+        //CEK ASPIRASI EXIST
         $cekAsp = $db->prepare("SELECT id_aspirasi FROM tb_aspirasi WHERE id_pelaporan = ?");
         $cekAsp->execute([$id]);
+        //UPDATE ATAU INSERT
         if ($cekAsp->fetch()) {
             $db->prepare("UPDATE tb_aspirasi SET status=?, feedback=?, ket_kategori=? WHERE id_pelaporan=?")
                ->execute([$newStatus, $feedback ?: null, $ketKategori, $id]);

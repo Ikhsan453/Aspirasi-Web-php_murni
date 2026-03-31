@@ -1,7 +1,9 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+//OPSI DROPDOWN
 $kelas_options = ['X', 'XI', 'XII'];
 $jurusan_options = [
     'Teknik Elektronika',
@@ -15,24 +17,30 @@ $jurusan_options = [
     'Teknologi Farmasi'
 ];
 
+//TANGANI POST REQUEST
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //VALIDASI CSRF
     verifyCsrf();
+    //AMBIL & SANITASI DATA
     $nis     = trim($_POST['nis'] ?? '');
     $kelas   = trim($_POST['kelas'] ?? '');
     $jurusan = trim($_POST['jurusan'] ?? '');
 
+    //VALIDASI FORM
     if (!$nis)     $errors[] = 'NIS wajib diisi.';
     elseif (mb_strlen($nis) > 10) $errors[] = 'NIS maksimal 10 karakter.';
     if (!$kelas)   $errors[] = 'Kelas wajib diisi.';
     if (!$jurusan) $errors[] = 'Jurusan wajib diisi.';
 
+    //CEK DUPLIKASI NIS
     if (empty($errors)) {
         $cek = getDB()->prepare("SELECT nis FROM tb_siswa WHERE nis = ?");
         $cek->execute([$nis]);
         if ($cek->fetch()) $errors[] = 'NIS sudah terdaftar.';
     }
 
+    //INSERT KE DATABASE
     if (empty($errors)) {
         getDB()->prepare("INSERT INTO tb_siswa (nis,kelas,jurusan) VALUES (?,?,?)")->execute([$nis,$kelas,$jurusan]);
         setFlash('success', 'Siswa berhasil ditambahkan.');

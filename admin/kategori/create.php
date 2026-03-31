@@ -1,14 +1,20 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+//TANGANI POST REQUEST
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    //VALIDASI CSRF
     verifyCsrf();
+    //AMBIL & SANITASI DATA
     $ket = trim($_POST['ket_kategori'] ?? '');
+    //VALIDASI INPUT
     if (!$ket) $errors[] = 'Nama kategori wajib diisi.';
     elseif (mb_strlen($ket) > 30) $errors[] = 'Nama kategori maksimal 30 karakter.';
 
+    //INSERT KE DATABASE
     if (empty($errors)) {
         getDB()->prepare("INSERT INTO tb_kategori (ket_kategori) VALUES (?)")->execute([$ket]);
         setFlash('success', 'Kategori berhasil ditambahkan.');

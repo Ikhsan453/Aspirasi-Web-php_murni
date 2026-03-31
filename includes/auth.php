@@ -1,9 +1,12 @@
 <?php
+//==================== HELPER FUNCTIONS ====================
 
+//FUNCTION: CEK STATUS LOGIN ADMIN
 function isAdminLoggedIn(): bool {
     return !empty($_SESSION['admin_id']);
 }
 
+//FUNCTION: REDIRECT JIK TIDAK LOGIN
 function requireAdmin(): void {
     if (!isAdminLoggedIn()) {
         header('Location: ' . url('admin/login.php'));
@@ -11,6 +14,7 @@ function requireAdmin(): void {
     }
 }
 
+//FUNCTION: GET DATA ADMIN LOGIN
 function getAdminUser(): ?array {
     if (!isAdminLoggedIn()) return null;
     return [
@@ -20,10 +24,12 @@ function getAdminUser(): ?array {
     ];
 }
 
+//FUNCTION: SET FLASH MESSAGE
 function setFlash(string $type, string $message): void {
     $_SESSION['flash_' . $type] = $message;
 }
 
+//FUNCTION: GET FLASH MESSAGE
 function getFlash(string $type): ?string {
     if (isset($_SESSION['flash_' . $type])) {
         $msg = $_SESSION['flash_' . $type];
@@ -33,6 +39,7 @@ function getFlash(string $type): ?string {
     return null;
 }
 
+//FUNCTION: GENERATE CSRF TOKEN
 function csrfToken(): string {
     if (empty($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -40,6 +47,7 @@ function csrfToken(): string {
     return $_SESSION['csrf_token'];
 }
 
+//FUNCTION: VERIFIKASI CSRF TOKEN
 function verifyCsrf(): void {
     $token = $_POST['csrf_token'] ?? '';
     $sessionToken = $_SESSION['csrf_token'] ?? '';
@@ -54,14 +62,17 @@ function verifyCsrf(): void {
     }
 }
 
+//FUNCTION: HTML ESCAPE OUTPUT
 function e(string $str): string {
     return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
 }
 
+//FUNCTION: BATASI PANJANG STRING
 function strLimit(string $str, int $limit = 30): string {
     return mb_strlen($str) > $limit ? mb_substr($str, 0, $limit) . '...' : $str;
 }
 
+//FUNCTION: HITUNG PAGINATION
 function paginate(int $total, int $perPage, int $currentPage, string $baseUrl): array {
     $totalPages = (int) ceil($total / max(1, $perPage));
     $offset     = ($currentPage - 1) * $perPage;
@@ -75,6 +86,7 @@ function paginate(int $total, int $perPage, int $currentPage, string $baseUrl): 
     ];
 }
 
+//FUNCTION: GENERATE PAGINATION LINKS
 function paginationLinks(array $p): string {
     if ($p['total_pages'] <= 1) return '';
     

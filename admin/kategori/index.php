@@ -1,13 +1,17 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+//INISIALISASI DATABASE & INPUT SEARCH
 $db     = getDB();
 $search = trim($_GET['search'] ?? '');
 $perPage = (int)($_GET['per_page'] ?? 10);
 $page    = max(1, (int)($_GET['page'] ?? 1));
+//VALIDASI PER_PAGE
 if (!in_array($perPage, [5,10,25,50,100])) $perPage = 10;
 
+//KONDISI SEARCH
 $where = '';
 $params = [];
 if ($search) {
@@ -15,12 +19,15 @@ if ($search) {
     $params[] = "%$search%";
 }
 
+//HITUNG TOTAL BARIS
 $total = $db->prepare("SELECT COUNT(*) FROM tb_kategori $where");
 $total->execute($params);
 $totalRows = (int)$total->fetchColumn();
 
+//HITUNG PAGINATION
 $pagination = paginate($totalRows, $perPage, $page, url('admin/kategori/index.php') . "?search=" . urlencode($search) . "&per_page=$perPage");
 
+//QUERY DATA TABEL KATEGORI
 $stmt = $db->prepare("SELECT * FROM tb_kategori $where ORDER BY id_kategori ASC LIMIT ? OFFSET ?");
 $stmt->execute(array_merge($params, [$perPage, $pagination['offset']]));
 $kategoris = $stmt->fetchAll();

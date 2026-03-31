@@ -1,15 +1,17 @@
 <?php
+//SETUP & KONFIGURASI
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+//VALIDASI CSRF JIK POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
 }
 
-// Hapus semua data session
+//DESTROY SESSION
 $_SESSION = [];
 
-// Hapus session cookie
+//HAPUS SESSION COOKIE
 if (ini_get('session.use_cookies')) {
     $params = session_get_cookie_params();
     setcookie(
@@ -19,6 +21,7 @@ if (ini_get('session.use_cookies')) {
     );
 }
 
+//DESTROY SESSION & REDIRECT
 session_destroy();
 
 header('Location: ' . url('admin/login.php'));
