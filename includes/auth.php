@@ -77,17 +77,51 @@ function paginate(int $total, int $perPage, int $currentPage, string $baseUrl): 
 
 function paginationLinks(array $p): string {
     if ($p['total_pages'] <= 1) return '';
+    
     $html = '<nav><ul class="pagination justify-content-center flex-wrap">';
+    
+    // Previous button
     if ($p['current'] > 1) {
         $html .= '<li class="page-item"><a class="page-link" href="' . $p['base_url'] . '&page=' . ($p['current'] - 1) . '">&laquo;</a></li>';
     }
-    for ($i = 1; $i <= $p['total_pages']; $i++) {
+    
+    // Calculate range based on per_page value
+    // Group halaman sesuai per_page (5, 10, 25, dll)
+    $perPage = $p['per_page'] ?? 10;
+    $groupSize = $perPage; // Jumlah halaman yang ditampilkan per grup
+    
+    // Tentukan group mana current page berada
+    $groupNum = (int) ceil($p['current'] / $groupSize);
+    $start = ($groupNum - 1) * $groupSize + 1;
+    $end = min($groupSize * $groupNum, $p['total_pages']);
+    
+    // Show ellipsis and first page if needed
+    if ($start > 1) {
+        $html .= '<li class="page-item"><a class="page-link" href="' . $p['base_url'] . '&page=1">1</a></li>';
+        if ($start > 2) {
+            $html .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+    }
+    
+    // Show current group of pages
+    for ($i = $start; $i <= $end; $i++) {
         $active = $i === $p['current'] ? ' active' : '';
         $html .= '<li class="page-item' . $active . '"><a class="page-link" href="' . $p['base_url'] . '&page=' . $i . '">' . $i . '</a></li>';
     }
+    
+    // Show ellipsis and last page if needed
+    if ($end < $p['total_pages']) {
+        if ($end < $p['total_pages'] - 1) {
+            $html .= '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        }
+        $html .= '<li class="page-item"><a class="page-link" href="' . $p['base_url'] . '&page=' . $p['total_pages'] . '">' . $p['total_pages'] . '</a></li>';
+    }
+    
+    // Next button
     if ($p['current'] < $p['total_pages']) {
         $html .= '<li class="page-item"><a class="page-link" href="' . $p['base_url'] . '&page=' . ($p['current'] + 1) . '">&raquo;</a></li>';
     }
+    
     $html .= '</ul></nav>';
     return $html;
 }
