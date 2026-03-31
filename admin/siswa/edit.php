@@ -2,6 +2,19 @@
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+$kelas_options = ['X', 'XI', 'XII'];
+$jurusan_options = [
+    'Teknik Elektronika',
+    'Teknik Kimia Industri',
+    'Kimia Analisis',
+    'Teknik Ketenagalistrikan',
+    'Teknik Otomotif',
+    'Teknik Mesin',
+    'Pengelasan dan Fabrikasi Logam',
+    'Teknik Pengembangan Perangkat Lunak dan Gim',
+    'Teknologi Farmasi'
+];
+
 $db  = getDB();
 $nis = trim($_GET['nis'] ?? '');
 $stmt = $db->prepare("SELECT * FROM tb_siswa WHERE nis = ?");
@@ -65,19 +78,23 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                             <label class="form-label fw-semibold">
                                 Kelas <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="kelas" class="form-control form-control-lg"
-                                   maxlength="10"
-                                   value="<?= e($_POST['kelas'] ?? $siswa['kelas']) ?>"
-                                   required>
+                            <select name="kelas" class="form-select form-select-lg" required>
+                                <option value="">-- Pilih Kelas --</option>
+                                <?php $selected_kelas = $_POST['kelas'] ?? $siswa['kelas']; foreach ($kelas_options as $k): ?>
+                                <option value="<?= $k ?>" <?= $selected_kelas === $k ? 'selected' : '' ?>>Kelas <?= $k ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label fw-semibold">
                                 Jurusan <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="jurusan" class="form-control form-control-lg"
-                                   maxlength="100"
-                                   value="<?= e($_POST['jurusan'] ?? $siswa['jurusan']) ?>"
-                                   required>
+                            <select name="jurusan" class="form-select form-select-lg" required>
+                                <option value="">-- Pilih Jurusan --</option>
+                                <?php $selected_jurusan = $_POST['jurusan'] ?? $siswa['jurusan']; foreach ($jurusan_options as $j): ?>
+                                <option value="<?= $j ?>" <?= $selected_jurusan === $j ? 'selected' : '' ?>><?= $j ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <div class="d-flex gap-3">

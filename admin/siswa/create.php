@@ -2,6 +2,19 @@
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../../includes/auth.php';
 
+$kelas_options = ['X', 'XI', 'XII'];
+$jurusan_options = [
+    'Teknik Elektronika',
+    'Teknik Kimia Industri',
+    'Kimia Analisis',
+    'Teknik Ketenagalistrikan',
+    'Teknik Otomotif',
+    'Teknik Mesin',
+    'Pengelasan dan Fabrikasi Logam',
+    'Teknik Pengembangan Perangkat Lunak dan Gim',
+    'Teknologi Farmasi'
+];
+
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
@@ -71,17 +84,23 @@ require_once __DIR__ . '/../../includes/header_admin.php';
                             <label class="form-label fw-semibold">
                                 Kelas <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="kelas" class="form-control form-control-lg"
-                                   maxlength="10" value="<?= e($_POST['kelas'] ?? '') ?>"
-                                   placeholder="Contoh: XII" required>
+                            <select name="kelas" class="form-select form-select-lg" required>
+                                <option value="">-- Pilih Kelas --</option>
+                                <?php foreach ($kelas_options as $k): ?>
+                                <option value="<?= $k ?>" <?= ($_POST['kelas'] ?? '') === $k ? 'selected' : '' ?>>Kelas <?= $k ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="col-md-7">
                             <label class="form-label fw-semibold">
                                 Jurusan <span class="text-danger">*</span>
                             </label>
-                            <input type="text" name="jurusan" class="form-control form-control-lg"
-                                   maxlength="100" value="<?= e($_POST['jurusan'] ?? '') ?>"
-                                   placeholder="Contoh: IPA 1" required>
+                            <select name="jurusan" class="form-select form-select-lg" required>
+                                <option value="">-- Pilih Jurusan --</option>
+                                <?php foreach ($jurusan_options as $j): ?>
+                                <option value="<?= $j ?>" <?= ($_POST['jurusan'] ?? '') === $j ? 'selected' : '' ?>><?= $j ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <div class="d-flex gap-3">
